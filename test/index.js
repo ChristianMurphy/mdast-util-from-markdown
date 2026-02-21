@@ -1,4 +1,5 @@
 /**
+ * @import {Extension} from 'mdast-util-from-markdown'
  * @import {Root} from 'mdast'
  */
 
@@ -14,6 +15,21 @@ import {toString} from 'mdast-util-to-string'
 import {fromMarkdown} from 'mdast-util-from-markdown'
 
 test('fromMarkdown', async function (t) {
+  /** @type {Extension} */
+  const tinyExample = {
+    canContainEols: ['someType'],
+    enter: {
+      lineEnding(token) {
+        this.enter({type: 'break'}, token)
+      }
+    },
+    exit: {
+      lineEnding(token) {
+        this.exit(token)
+      }
+    }
+  }
+
   await t.test('should expose the public api', async function () {
     assert.deepEqual(
       Object.keys(await import('mdast-util-from-markdown')).sort(),
@@ -93,24 +109,7 @@ test('fromMarkdown', async function (t) {
 
   await t.test('should support extensions', async function () {
     assert.deepEqual(
-      fromMarkdown('a\nb', {
-        mdastExtensions: [
-          {
-            // `canContainEols` is an array.
-            canContainEols: ['someType'],
-            enter: {
-              lineEnding(token) {
-                this.enter({type: 'break'}, token)
-              }
-            },
-            exit: {
-              lineEnding(token) {
-                this.exit(token)
-              }
-            }
-          }
-        ]
-      }).children[0],
+      fromMarkdown('a\nb', {mdastExtensions: [tinyExample]}).children[0],
       {
         type: 'paragraph',
         children: [
@@ -202,6 +201,91 @@ test('fromMarkdown', async function (t) {
       }
     )
   })
+
+  await t.test('should support encoding and options', async function () {
+    assert.deepEqual(
+      fromMarkdown(
+        new Uint8Array([0x61, 0x00, 0x0a, 0x00, 0x62, 0x00]),
+        'utf-16le',
+        {mdastExtensions: [tinyExample]}
+      ).children[0],
+      {
+        type: 'paragraph',
+        children: [
+          {
+            type: 'text',
+            value: 'a',
+            position: {
+              start: {line: 1, column: 1, offset: 0},
+              end: {line: 1, column: 2, offset: 1}
+            }
+          },
+          {
+            type: 'break',
+            position: {
+              start: {line: 1, column: 2, offset: 1},
+              end: {line: 2, column: 1, offset: 2}
+            }
+          },
+          {
+            type: 'text',
+            value: 'b',
+            position: {
+              start: {line: 2, column: 1, offset: 2},
+              end: {line: 2, column: 2, offset: 3}
+            }
+          }
+        ],
+        position: {
+          start: {line: 1, column: 1, offset: 0},
+          end: {line: 2, column: 2, offset: 3}
+        }
+      }
+    )
+  })
+
+  await t.test(
+    'should support `encoding: undefined` and options',
+    async function () {
+      assert.deepEqual(
+        fromMarkdown(new Uint8Array([0x61, 0x0a, 0x62]), undefined, {
+          mdastExtensions: [tinyExample]
+        }).children[0],
+        {
+          type: 'paragraph',
+          children: [
+            {
+              type: 'text',
+              value: 'a',
+              position: {
+                start: {line: 1, column: 1, offset: 0},
+                end: {line: 1, column: 2, offset: 1}
+              }
+            },
+            {
+              type: 'break',
+              position: {
+                start: {line: 1, column: 2, offset: 1},
+                end: {line: 2, column: 1, offset: 2}
+              }
+            },
+            {
+              type: 'text',
+              value: 'b',
+              position: {
+                start: {line: 2, column: 1, offset: 2},
+                end: {line: 2, column: 2, offset: 3}
+              }
+            }
+          ],
+          position: {
+            start: {line: 1, column: 1, offset: 0},
+            end: {line: 2, column: 2, offset: 3}
+          }
+        }
+      )
+    }
+  )
 
   await t.test('should support `transforms` in extensions', async function () {
     assert.deepEqual(
