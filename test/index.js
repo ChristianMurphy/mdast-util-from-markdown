@@ -10,8 +10,8 @@ import {commonmark} from 'commonmark.json'
 import {fromHtml} from 'hast-util-from-html'
 import {toHtml} from 'hast-util-to-html'
 import {toHast} from 'mdast-util-to-hast'
-import {fromMarkdown} from 'mdast-util-from-markdown'
 import {toString} from 'mdast-util-to-string'
+import {fromMarkdown} from 'mdast-util-from-markdown'
 
 test('fromMarkdown', async function (t) {
   await t.test('should expose the public api', async function () {
@@ -210,7 +210,7 @@ test('fromMarkdown', async function (t) {
           {
             transforms: [
               function (tree) {
-                assert(tree.children[0].type === 'paragraph')
+                assert.ok(tree.children[0].type === 'paragraph')
                 tree.children[0].children[0].type = 'strong'
               }
             ]
@@ -1058,7 +1058,7 @@ test('commonmark', async function (t) {
 
       const mdast = fromMarkdown(input)
       const hast = toHast(mdast, {allowDangerousHtml: true})
-      assert(hast && hast.type === 'root', 'expected `root`')
+      assert.ok(hast && hast.type === 'root', 'expected `root`')
       const actual = toHtml(hast, {allowDangerousHtml: true})
 
       assert.equal(
