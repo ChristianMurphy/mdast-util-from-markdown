@@ -81,6 +81,9 @@
   },
   "repository": "syntax-tree/mdast-util-from-markdown",
   "scripts": {
+    "bench": "node --expose-gc bench/bench.mjs",
+    "bench-setup": "bash bench/setup.sh up",
+    "bench-teardown": "bash bench/setup.sh teardown",
     "build": "tsc --build --clean && tsc --build && type-coverage && micromark-build && esbuild . --bundle --minify | terser | gzip-size --raw",
     "format": "remark --frail --quiet --output -- . && prettier --log-level warn --write -- . && xo --fix",
     "test-api-dev": "node --conditions development test/index.js",
