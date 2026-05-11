@@ -8,13 +8,17 @@ jobs:
         with:
           node-version: ${{matrix.node}}
       - run: npm install
-      - run: npm test
+      - run: npm run ${{matrix.test-cmd}}
       - uses: codecov/codecov-action@v5
     strategy:
       matrix:
-        node:
-          - lts/iron
-          - node
+        include:
+          - node: lts/iron
+            test-cmd: test
+          - node: lts/jod
+            test-cmd: test-strict
+          - node: lts/*
+            test-cmd: test-strict
 name: main
 on:
   - pull_request
